@@ -64,6 +64,7 @@ flow.set_model_config(
 
 ## What to Read Next
 
+- [Get Started](get-started.md) -- fastest path to generating data using Claude Code with a 2-step agent workflow
 - [Installation](installation.md) -- optional dependencies, development setup, and verification
 - [Quick Start](quickstart.md) -- end-to-end walkthrough from loading a flow to generating data
 - [Core Concepts](concepts.md) -- blocks, flows, registries, and dataset handling explained
