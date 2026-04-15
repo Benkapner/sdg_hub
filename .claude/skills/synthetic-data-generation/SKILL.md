@@ -9,202 +9,277 @@ Generate synthetic data using composable blocks and flows. Blocks are processing
 
 Core concept: `dataset -> Block_1 -> Block_2 -> Block_3 -> enriched_dataset`
 
-## Choose Your Approach
+## Phase 1: Project Bootstrap
 
-| Approach | When to Use |
-|----------|-------------|
-| **Pre-built flow** | Standard pipeline exists for your task (QA generation, text analysis, red-teaming, RAG eval, MCP distillation) |
-| **Custom Python** | Quick experiments, ad-hoc generation, custom logic |
-| **Custom YAML flow** | Reusable pipeline, team sharing, complex multi-block workflows |
-| **Agent-based** | Need external agent frameworks (Langflow, LangGraph) or MCP tool-use in your pipeline |
+When the user needs to set up sdg_hub from scratch, handle **all** of the following steps autonomously without asking the user for input. The user should not need to make any decisions during bootstrap.
 
-## Approach A: Pre-Built Flows
+### Step 1: Check Python version
 
-### Step 1: Discover flows
-
-```python
-# play.py
-from sdg_hub import FlowRegistry
-
-# List all flows
-for f in FlowRegistry.list_flows():
-    print(f"- {f['name']} (tags: {f.get('tags', [])})")
-
-# Search by tag
-FlowRegistry.search_flows(tag="qa-generation")
+```bash
+python3 --version
 ```
 
-Consult `references/pre_built_flows.md` for the full catalog with descriptions and required inputs.
+Require Python 3.10+. If not available, tell the user to install it and stop.
 
-### Step 2: Load and inspect
+### Step 2: Install sdg_hub
 
-```python
-from sdg_hub import Flow, FlowRegistry
-
-path = FlowRegistry.get_flow_path("Flow Name or ID")
-flow = Flow.from_yaml(path)
-flow.print_info()
-
-# Check what dataset columns are needed
-reqs = flow.get_dataset_requirements()
-if reqs:
-    print(f"Required columns: {reqs.required_columns}")
+```bash
+# Prefer uv if available
+if command -v uv &>/dev/null; then
+    uv pip install sdg-hub
+else
+    pip install sdg-hub
+fi
 ```
 
-### Step 3: Configure model
+### Step 3: Verify installation
+
+```bash
+python3 -c "from sdg_hub import FlowRegistry, BlockRegistry; FlowRegistry.discover_flows(); print('sdg_hub installed successfully'); print(f'{len(FlowRegistry.list_flows())} flows available')"
+```
+
+### Step 4: Set up workspace
+
+Create a working directory with a `data/` folder for input documents and an `output/` folder for results:
+
+```bash
+mkdir -p data output
+```
+
+After bootstrap, print a summary of what was set up and tell the user they are ready to generate data.
+
+**Note:** The user is responsible for having their LLM API key exported in their environment before running bootstrap (e.g., `export OPENAI_API_KEY=sk-...`). Do NOT scan for or attempt to detect API keys -- this is a prerequisite the user handles ahead of time.
+
+---
+
+## Phase 2: Interactive Data Generation
+
+This is the core workflow. When a user wants to generate synthetic data, follow these steps in order. **You drive the process** -- only ask the user for information that requires their domain knowledge.
+
+### What you need from the user (and ONLY this)
+
+1. **Where are their source documents?** A file path or directory (e.g., `./data/`, `~/docs/report.pdf`). Or a HuggingFace dataset name.
+2. **What kind of data do they want?** Described in natural language (e.g., "QA pairs for training", "red-team prompts", "RAG evaluation questions").
+
+Everything else -- flow selection, model configuration, dataset construction, validation, execution, and saving -- you handle autonomously.
+
+### Step 1: Understand the user's goal
+
+Ask the user two questions (combine into a single message):
+- Where are the source documents or data?
+- What kind of synthetic data should be generated?
+
+If the user already provided this information in their initial message, skip asking and proceed directly.
+
+### Step 2: Detect and load data sources
+
+Scan the location the user provided. Handle these formats automatically:
 
 ```python
+import pandas as pd
 import os
 
-flow.set_model_config(
-    model="openai/gpt-4o-mini",
-    api_key=os.environ.get("OPENAI_API_KEY")
-)
+path = "user_provided_path"
 
-# For local models (vLLM, Ollama)
-flow.set_model_config(
-    model="meta-llama/Llama-3.3-70B-Instruct",
-    api_base="http://localhost:8000/v1",
-    api_key="EMPTY"
-)
+if os.path.isdir(path):
+    # Scan directory for supported files
+    files = []
+    for root, dirs, filenames in os.walk(path):
+        for f in filenames:
+            if f.endswith(('.txt', '.md', '.csv', '.json', '.jsonl', '.parquet', '.pdf')):
+                files.append(os.path.join(root, f))
+    print(f"Found {len(files)} files")
+
+    # Load based on file type
+    if all(f.endswith('.csv') for f in files):
+        df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    elif all(f.endswith(('.json', '.jsonl')) for f in files):
+        df = pd.concat([pd.read_json(f, lines=f.endswith('.jsonl')) for f in files], ignore_index=True)
+    elif all(f.endswith('.parquet') for f in files):
+        df = pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
+    else:
+        # Text files -- read content into a "document" column
+        documents = []
+        for f in files:
+            with open(f) as fh:
+                documents.append({"document": fh.read(), "source_file": os.path.basename(f)})
+        df = pd.DataFrame(documents)
+
+elif os.path.isfile(path):
+    if path.endswith('.csv'):
+        df = pd.read_csv(path)
+    elif path.endswith('.parquet'):
+        df = pd.read_parquet(path)
+    elif path.endswith(('.json', '.jsonl')):
+        df = pd.read_json(path, lines=path.endswith('.jsonl'))
+    else:
+        df = pd.DataFrame({"document": [open(path).read()]})
 ```
 
-See `references/model_configs.md` for all supported providers (OpenAI, Anthropic, Azure, vLLM, Ollama, Together, Groq, Bedrock, etc.).
+For HuggingFace datasets:
+```python
+from datasets import load_dataset
+ds = load_dataset("dataset_name", split="train")
+df = ds.to_pandas()
+```
 
-### Step 4: Prepare data and dry run
+Tell the user what you found: number of rows, columns, and a brief preview.
+
+### Step 3: Select the right flow
+
+Match the user's stated goal to a pre-built flow. Use this decision table:
+
+| User wants | Flow to use | Required columns |
+|------------|-------------|------------------|
+| QA pairs from documents | Knowledge Infusion (extractive summary variant) | `document` |
+| Detailed QA with context | Knowledge Infusion (detailed summary variant) | `document` |
+| Fact-based QA | Knowledge Infusion (key facts variant) | `document` |
+| Direct QA without summarization | Knowledge Infusion (doc direct QA variant) | `document` |
+| Text analysis / insights | Structured Text Insights Extraction | `text` |
+| Red-team / adversarial prompts | Red Team Prompt Generation | `policy_concept`, `concept_definition`, pool columns |
+| RAG evaluation questions | RAG Evaluation Dataset | depends on flow |
+| MCP tool-use training data | MCP Server Distillation | `messages` |
+| Spanish QA | Spanish Multi-Summary QA variants | `document` |
+| Japanese QA | Japanese Multi-Summary QA | `document` |
 
 ```python
-import pandas as pd
+from sdg_hub import FlowRegistry
 
-df = pd.DataFrame({"document": ["Your text here..."]})
+# Discover all flows
+FlowRegistry.discover_flows()
+flows = FlowRegistry.list_flows()
 
-# Validate dataset against flow requirements
+# Search by tag to narrow down
+matching = FlowRegistry.search_flows(tag="qa-generation")
+
+# Load the chosen flow
+from sdg_hub import Flow
+flow_path = FlowRegistry.get_flow_path("flow-name-or-id")
+flow = Flow.from_yaml(flow_path)
+flow.print_info()
+```
+
+If no pre-built flow matches, build a custom flow. See the "Custom Flows" section below.
+
+Tell the user which flow you selected and why. Do NOT ask for confirmation unless the choice is ambiguous (e.g., the user's description could match multiple flows).
+
+### Step 4: Prepare the dataset
+
+Adapt the user's data to match the flow's required schema:
+
+```python
+# Check what the flow needs
+reqs = flow.get_dataset_requirements()
+if reqs:
+    required = reqs.required_columns
+    print(f"Flow requires: {required}")
+    print(f"Dataset has: {list(df.columns)}")
+
+# Rename columns if needed (e.g., user has "text" but flow needs "document")
+column_mapping = {}
+if "document" in required and "document" not in df.columns:
+    # Try common alternatives
+    for alt in ["text", "content", "body", "passage"]:
+        if alt in df.columns:
+            column_mapping[alt] = "document"
+            break
+
+if column_mapping:
+    df = df.rename(columns=column_mapping)
+
+# Validate
 errors = flow.validate_dataset(df)
 if errors:
-    print(f"Fix these: {errors}")
-
-# Dry run with 2 samples -- do this before every full run
-dry = flow.dry_run(df, sample_size=2)
-print(f"Success: {dry['execution_successful']}")
-for block in dry['blocks_executed']:
-    print(f"  {block['block_name']}: {block['execution_time_seconds']:.2f}s")
+    print(f"Validation issues: {errors}")
 ```
 
-### Step 5: Generate and save
+Handle common mismatches silently. Only ask the user if a required column genuinely cannot be inferred from their data.
+
+### Step 5: Configure the model
+
+The user should have already exported their API key before starting (e.g., `export OPENAI_API_KEY=sk-...`). LiteLLM reads standard environment variables automatically, so you typically do not need to pass `api_key` explicitly.
+
+Configure the model for the flow:
 
 ```python
-# Full run with checkpointing for large datasets
+# LiteLLM reads API keys from standard env vars (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)
+# The user must have set this before starting -- do NOT scan for keys
+
+# Pick a model appropriate for the user's provider
+flow.set_model_config(model="openai/gpt-4o-mini")
+
+# Or if the user specified a provider/model:
+# flow.set_model_config(model="anthropic/claude-sonnet-4-6")
+# flow.set_model_config(model="together_ai/meta-llama/Llama-3-70b-chat-hf")
+```
+
+Ask the user which model/provider they want to use if it is not obvious from context. Do NOT scan the environment for API keys.
+
+### Step 6: Dry run
+
+Always run a dry run before the full generation. Do NOT skip this step.
+
+```python
+dry = flow.dry_run(df, sample_size=min(2, len(df)))
+
+if dry["execution_successful"]:
+    print("Dry run succeeded!")
+    for block in dry["blocks_executed"]:
+        print(f"  {block['block_name']}: {block['execution_time_seconds']:.2f}s")
+else:
+    print("Dry run failed -- investigating...")
+    # Check error details and fix
+```
+
+If the dry run fails, diagnose and fix the issue (common causes: missing columns, bad model config, template errors). Do NOT ask the user to fix it -- handle it yourself by adjusting the dataset or configuration.
+
+### Step 7: Generate
+
+```python
 result = flow.generate(
     df,
-    checkpoint_dir="./checkpoints",
-    save_freq=100,
-    max_concurrency=5
+    checkpoint_dir="./output/checkpoints",
+    save_freq=50,
+    max_concurrency=5,
 )
 
-result.to_parquet("output.parquet")
+print(f"Generated {len(result)} rows")
+print(f"Output columns: {list(result.columns)}")
 ```
 
-## Approach B: Custom Python Scripts
+### Step 8: Save and present results
 
-Use blocks directly for ad-hoc experiments.
-
-### Basic: Single block
+Save in multiple formats so the user has options:
 
 ```python
-# play.py
-from sdg_hub.core.blocks import LLMChatBlock
-import pandas as pd
+# Save as JSONL (most portable)
+output_path = "./output/generated_data.jsonl"
+result.to_json(output_path, orient="records", lines=True)
 
-block = LLMChatBlock(
-    block_name="gen",
-    input_cols="messages",
-    output_cols="response",
-    model="openai/gpt-4o-mini",
-    api_key="sk-...",
-    temperature=0.7
-)
+# Also save as Parquet (efficient for large datasets)
+result.to_parquet("./output/generated_data.parquet")
 
-df = pd.DataFrame({
-    "messages": [[
-        {"role": "system", "content": "You generate QA pairs."},
-        {"role": "user", "content": "Generate a fun fact about Python."}
-    ]]
-})
-
-result = block(df)
-print(result["response"].iloc[0])
+print(f"Saved {len(result)} rows to {output_path}")
 ```
 
-### Chain: Multiple blocks
+Show the user a preview of the generated data (first 3-5 rows) and a summary of what was produced (row count, columns, any quality notes).
 
-```python
-from sdg_hub.core.blocks import LLMChatBlock, TagParserBlock
-import pandas as pd
+---
 
-# Step 1: Generate
-llm = LLMChatBlock(
-    block_name="gen",
-    input_cols="messages",
-    output_cols="response",
-    model="openai/gpt-4o-mini",
-    api_key="sk-..."
-)
+## Custom Flows
 
-# Step 2: Parse with tags
-parser = TagParserBlock(
-    block_name="parse",
-    input_cols="response",
-    output_cols=["question", "answer"],
-    start_tags=["<question>", "<answer>"],
-    end_tags=["</question>", "</answer>"]
-)
-
-df = pd.DataFrame({
-    "messages": [[
-        {"role": "user", "content": "Generate a QA pair. Use <question>...</question> and <answer>...</answer> tags."}
-    ]]
-})
-
-result = parser(llm(df))
-print(result[["question", "answer"]])
-```
-
-### Batch processing for large datasets
-
-```python
-from tqdm import tqdm
-
-def process_in_batches(df, block, batch_size=50):
-    results = []
-    for i in tqdm(range(0, len(df), batch_size)):
-        batch = df.iloc[i:i+batch_size].copy()
-        results.append(block(batch))
-    return pd.concat(results, ignore_index=True)
-```
-
-See `references/block_reference.md` for all 20+ available blocks and their configurations.
-
-## Approach C: Authoring Custom Flow YAMLs
-
-Build incrementally -- start with one block, test, add the next.
+When no pre-built flow matches the user's needs, build one. Follow this process:
 
 ### Step 1: Define the data contract
 
-```python
-# play.py - Clarify inputs and outputs first
-import pandas as pd
+Clarify inputs and outputs before writing any YAML:
+- What columns does the input data have?
+- What columns should the output contain?
+- What transformation needs to happen?
 
-input_df = pd.DataFrame({
-    "document": ["Climate change is accelerating..."],
-    "domain": ["environment"]
-})
-print("Input columns:", list(input_df.columns))
+### Step 2: Write the flow YAML
 
-expected_outputs = ["document", "domain", "question", "response"]
-print("Expected output:", expected_outputs)
-```
-
-### Step 2: Minimal YAML
+Build incrementally -- start with one block, test, add the next.
 
 ```yaml
 # flow.yaml
@@ -241,7 +316,7 @@ blocks:
       end_tags: ["</question>", "</answer>"]
 ```
 
-### Step 3: Create prompt template
+### Step 3: Create prompt templates
 
 ```yaml
 # prompts/qa.yaml (relative to flow.yaml)
@@ -257,10 +332,9 @@ blocks:
     {document}
 ```
 
-### Step 4: Test incrementally
+### Step 4: Test and iterate
 
 ```python
-# play.py
 from sdg_hub import Flow
 import pandas as pd
 
@@ -269,11 +343,7 @@ flow.set_model_config(model="openai/gpt-4o-mini", api_key="sk-...")
 
 df = pd.DataFrame({"document": ["Python was created by Guido van Rossum in 1991."]})
 
-# Dry run first
 dry = flow.dry_run(df, sample_size=1)
-print(f"Success: {dry['execution_successful']}")
-
-# Full run
 if dry['execution_successful']:
     result = flow.generate(df)
     print(result[["document", "question", "response"]])
@@ -281,7 +351,9 @@ if dry['execution_successful']:
 
 See `references/yaml_schema.md` for the complete YAML structure and `references/flow_patterns.md` for common patterns (quality filtering, parallel paths, multi-step extraction).
 
-## Approach D: Agent and MCP Pipelines
+---
+
+## Agent and MCP Pipelines
 
 ### Agent frameworks (Langflow, LangGraph)
 
@@ -331,7 +403,11 @@ if flow.is_agent_config_required():
 
 See the pre-built `MCP Server Distillation` flow in `references/pre_built_flows.md` for a complete pipeline.
 
-## Flow Methods Quick Reference
+---
+
+## Quick Reference
+
+### Flow methods
 
 ```python
 flow = Flow.from_yaml("flow.yaml")
@@ -359,7 +435,7 @@ flow.print_info()
 flow.to_yaml("output_flow.yaml")
 ```
 
-## Block Discovery
+### Block discovery
 
 ```python
 from sdg_hub.core.blocks import BlockRegistry
@@ -370,7 +446,7 @@ BlockRegistry.list_blocks(grouped=True)            # Grouped by category
 BlockRegistry.categories()                         # All categories
 ```
 
-## Data I/O
+### Data I/O
 
 ```python
 import pandas as pd
@@ -393,16 +469,6 @@ result.to_json("output.jsonl", orient="records", lines=True)
 from datasets import Dataset
 Dataset.from_pandas(result).push_to_hub("username/dataset")
 ```
-
-## Quality Checklist
-
-Before using generated data:
-
-- [ ] Dry run succeeded with `sample_size=2`?
-- [ ] Output columns are correct?
-- [ ] Sample outputs look reasonable (spot-check 5-10)?
-- [ ] No excessive nulls or empty values?
-- [ ] Data saved to durable storage?
 
 ## Common Issues
 

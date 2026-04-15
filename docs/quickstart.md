@@ -1,5 +1,8 @@
 # Quick Start
 
+> Looking for the fastest path? Try the [Get Started](get-started.md) guide
+> for a 2-step agent-driven workflow using Claude Code.
+
 By the end of this guide, you will have loaded a built-in flow, validated it
 with a dry run, and generated synthetic data.
 
