@@ -46,6 +46,15 @@ workflow in `.github/workflows/test.yml`.
 uv run pytest tests/blocks tests/connectors tests/flow tests/utils -m "not (examples or slow)"
 ```
 
+### Flow Regression Tests
+
+Flow regression tests auto-discover shipped `flow.yaml` files and run
+them end-to-end with mocked LLM responses.
+
+```bash
+uv run pytest tests/flow/regression -v
+```
+
 ### Unit Tests with Coverage
 
 ```bash

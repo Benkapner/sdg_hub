@@ -64,6 +64,9 @@ uv run pytest tests/blocks tests/connectors tests/flow tests/utils \
 uv run pytest --cov=sdg_hub --cov-report=term \
   tests/blocks tests/connectors tests/flow tests/utils
 
+# Flow regression tests (auto-discovers flow YAMLs with mocked LLMs)
+uv run pytest tests/flow/regression -v
+
 # Single test file or pattern
 uv run pytest tests/blocks/test_specific.py
 uv run pytest -k "test_pattern"
