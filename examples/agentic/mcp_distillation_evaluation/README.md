@@ -42,7 +42,7 @@ Only the underlying LLM changes. This means you're evaluating your full agent st
 | File | Description |
 |------|-------------|
 | `eval_utils.py` | Shared utilities: trace normalization, formatting, programmatic metrics |
-| `start_servers.sh` | Start/stop/check MCP servers, install shared `fastmcp<2`, and warn on dependency install failures |
+| `start_servers.sh` | Start/stop/check MCP servers, enforce shared `fastmcp<2`, and warn on dependency install failures |
 | `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support |
 | `.env.example` | Template for API keys and agent URLs |
 
@@ -50,7 +50,7 @@ Only the underlying LLM changes. This means you're evaluating your full agent st
 
 - **[uv](https://docs.astral.sh/uv/)** — sdg_hub uses `uv` for package management.
   The server startup script installs MCP server dependencies via `uv pip install`
-  and pins `fastmcp<2` for mcp-bench server compatibility.
+  and force-reinstalls `fastmcp<2` for mcp-bench server compatibility.
 - **Node.js + npm** — only needed for the DEX Paprika server
 - **OPENAI_API_KEY** — for the frontier model (generation) and judge (evaluation)
 
@@ -61,7 +61,7 @@ cd examples/agentic/mcp_distillation_evaluation
 
 # 1. Start MCP servers
 git clone https://github.com/Accenture/mcp-bench.git ../../mcp-bench
-bash start_servers.sh  # installs fastmcp<2 + per-server deps; warns on install failures
+bash start_servers.sh  # enforces fastmcp<2 + installs per-server deps; warns on install failures
 
 # 2. Start LangGraph agents (one per server, model swappable at runtime)
 bash start_agents.sh
