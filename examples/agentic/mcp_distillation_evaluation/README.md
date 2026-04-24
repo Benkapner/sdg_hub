@@ -44,7 +44,8 @@ Only the underlying LLM changes. This means you're evaluating your full agent st
 |------|-------------|
 | `eval_utils.py` | Shared utilities: trace normalization, formatting, programmatic metrics |
 | `start_servers.sh` | Start/stop/check MCP servers, install shared `fastmcp`, and warn on dependency install failures |
-| `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support across dict and Runtime run-config objects |
+| `start_agents.sh` | Start/stop/check LangGraph agents with runtime model overrides, dict/Runtime config compatibility, and explicit MCP tool binding for LangGraph >=1.1 |
+| `.gitignore` | Ignores runtime-generated LangGraph files (`_langgraph_agent.py`, `_agent_configs/`, `.langgraph_api/`) |
 | `.env.example` | Template for API keys and agent URLs |
 
 ## Prerequisites
