@@ -14,8 +14,9 @@ This example showcases two core sdg_hub capabilities:
 
 2. **[LangGraph Connector](../../../src/sdg_hub/core/connectors/agent/langgraph.py)** —
    Connects sdg_hub's `AgentBlock` to any LangGraph-deployed agent. Supports runtime
-   model swapping via `run_config.configurable`, enabling the same agent to be used
-   for both data generation (with a frontier model) and evaluation (with target models).
+   model swapping via `run_config.configurable` across LangGraph versions that pass
+   either dict or Runtime config objects, enabling the same agent to be used for
+   both data generation (with a frontier model) and evaluation (with target models).
 
 ## Overview
 
@@ -43,7 +44,7 @@ Only the underlying LLM changes. This means you're evaluating your full agent st
 |------|-------------|
 | `eval_utils.py` | Shared utilities: trace normalization, formatting, programmatic metrics |
 | `start_servers.sh` | Start/stop/check MCP servers, install shared `fastmcp`, and warn on dependency install failures |
-| `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support |
+| `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support across dict and Runtime run-config objects |
 | `.env.example` | Template for API keys and agent URLs |
 
 ## Prerequisites
