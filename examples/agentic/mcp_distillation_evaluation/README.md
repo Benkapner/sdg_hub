@@ -42,7 +42,7 @@ Only the underlying LLM changes. This means you're evaluating your full agent st
 | File | Description |
 |------|-------------|
 | `eval_utils.py` | Shared utilities: trace normalization, formatting, programmatic metrics |
-| `start_servers.sh` | Start/stop/check MCP servers (native FastMCP for Python servers) |
+| `start_servers.sh` | Start/stop/check MCP servers, install shared `fastmcp`, and warn on dependency install failures |
 | `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support |
 | `.env.example` | Template for API keys and agent URLs |
 
@@ -53,7 +53,7 @@ cd examples/agentic/mcp_distillation_evaluation
 
 # 1. Start MCP servers
 git clone https://github.com/Accenture/mcp-bench.git ../../mcp-bench
-bash start_servers.sh
+bash start_servers.sh  # installs fastmcp + per-server deps; warns on install failures
 
 # 2. Start LangGraph agents (one per server, model swappable at runtime)
 bash start_agents.sh
@@ -64,6 +64,9 @@ cp .env.example .env  # add your OPENAI_API_KEY
 # 4. Generate evaluation tasks (generate.ipynb)
 # 5. Evaluate models (evaluate.ipynb)
 ```
+
+If `start_servers.sh` reports install warnings, fix the missing dependency in the
+corresponding `mcp-bench/mcp_servers/<server>` directory before continuing.
 
 ## Results
 
