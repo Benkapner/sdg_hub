@@ -2,7 +2,10 @@
 
 The connector system provides a pluggable interface for communicating with external agent frameworks. Connectors handle request formatting, HTTP transport, response parsing, and error handling for each supported framework.
 
-Connectors are used by `AgentBlock` and `AgentResponseExtractorBlock` to integrate agent frameworks (Langflow, LangGraph, etc.) into data generation pipelines.
+Connectors are used by `AgentBlock` to integrate agent frameworks (Langflow,
+LangGraph, etc.) into data generation pipelines.
+`AgentResponseExtractorBlock` operates on the standardized response dictionaries
+already produced by `AgentBlock`.
 
 ## Architecture Overview
 
@@ -187,80 +190,47 @@ It uses an async-first pattern: the core logic lives in `_send_async()`, and the
 Subclasses must implement these two methods:
 
 ```python
+from mlflow.types.agent import ChatAgentRequest, ChatAgentResponse
+
+
 @abstractmethod
 def build_request(
     self,
-    messages: list[dict[str, Any]],
-    session_id: str,
+    request: ChatAgentRequest,
 ) -> dict[str, Any]:
-    """Build framework-specific request payload.
+    """Build framework-specific request payload."""
 
-    Parameters
-    ----------
-    messages : list[dict]
-        List of messages in standard format:
-        [{"role": "user", "content": "Hello"}, ...]
-    session_id : str
-        Session identifier for conversation tracking.
 
-    Returns
-    -------
-    dict
-        Framework-specific request payload.
-    """
-```
-
-```python
 @abstractmethod
-def parse_response(self, response: dict[str, Any]) -> dict[str, Any]:
-    """Parse and validate framework response.
-
-    Parameters
-    ----------
-    response : dict
-        Raw response from the framework.
-
-    Returns
-    -------
-    dict
-        Validated response dict.
-
-    Raises
-    ------
-    ConnectorError
-        If the response is invalid or cannot be parsed.
-    """
+def parse_response(self, response: dict[str, Any]) -> ChatAgentResponse:
+    """Parse framework response into standardized ChatAgentResponse."""
 ```
 
 ### Concrete Methods
 
-#### `send(messages, session_id, async_mode=False)`
+#### `send(request, async_mode=False)`
 
-Send messages to the agent. This is the primary entry point.
+Send a standardized request to the agent. This is the primary entry point.
 
 ```python
 def send(
     self,
-    messages: list[dict[str, Any]],
-    session_id: str,
+    request: ChatAgentRequest,
     async_mode: bool = False,
-) -> dict | Coroutine:
-    """Send messages to the agent.
+) -> ChatAgentResponse | Coroutine[ChatAgentResponse]:
+    """Send request to the agent.
 
     Parameters
     ----------
-    messages : list[dict]
-        Messages to send, in format:
-        [{"role": "user", "content": "Hello"}, ...]
-    session_id : str
-        Session identifier for conversation tracking.
+    request : ChatAgentRequest
+        Standardized request object.
     async_mode : bool, optional
         If True, returns a coroutine. If False (default), runs synchronously.
 
     Returns
     -------
-    dict or Coroutine[dict]
-        Response dict, or coroutine if async_mode=True.
+    ChatAgentResponse or Coroutine[ChatAgentResponse]
+        Parsed response object, or coroutine if async_mode=True.
     """
 ```
 
@@ -269,35 +239,34 @@ When `async_mode=False` (default), this method handles event loop detection auto
 - If already in an async context, it uses a `ThreadPoolExecutor` to avoid blocking.
 - If no event loop is running, it creates one with `asyncio.run()`.
 
-#### `asend(messages, session_id)`
+#### `asend(request)`
 
 Async convenience wrapper that directly awaits the internal `_send_async()`.
 
 ```python
 async def asend(
     self,
-    messages: list[dict[str, Any]],
-    session_id: str,
-) -> dict[str, Any]:
+    request: ChatAgentRequest,
+) -> ChatAgentResponse:
     """Async send - convenience wrapper.
 
     Parameters
     ----------
-    messages : list[dict]
-        Messages to send.
-    session_id : str
-        Session identifier.
+    request : ChatAgentRequest
+        Standardized request object.
 
     Returns
     -------
-    dict
+    ChatAgentResponse
         Response from the agent.
     """
 ```
 
 #### `execute(request)`
 
-Implements the `BaseConnector.execute()` interface by delegating to `send()`.
+Implements the `BaseConnector.execute()` interface by converting legacy
+`{"messages": ..., "session_id": ...}` dict input into a `ChatAgentRequest`,
+then returning `ChatAgentResponse.model_dump()`.
 
 ```python
 def execute(self, request: dict[str, Any]) -> dict[str, Any]:
@@ -315,25 +284,13 @@ def execute(self, request: dict[str, Any]) -> dict[str, Any]:
     """
 ```
 
-### Response Field Extraction Class Methods
+### Standardized Response Contract
 
-These class methods allow extracting fields from framework-specific responses without instantiating a connector. They are used by `AgentResponseExtractorBlock`.
-
-The base class returns `None` for all extractors. Subclasses override to provide framework-specific parsing.
-
-```python
-@classmethod
-def extract_text(cls, response: dict[str, Any]) -> str | None:
-    """Extract text content from a framework response."""
-
-@classmethod
-def extract_session_id(cls, response: dict[str, Any]) -> str | None:
-    """Extract session ID from a framework response."""
-
-@classmethod
-def extract_tool_trace(cls, response: dict[str, Any]) -> list[dict[str, Any]] | None:
-    """Extract tool call trace from a framework response."""
-```
+Connectors no longer expose `extract_*` class methods. Instead, each connector
+must map framework responses into `ChatAgentResponse` with normalized
+`messages` (including assistant `tool_calls` and `tool` result messages when
+available). `AgentResponseExtractorBlock` then extracts fields from this
+standardized structure in a framework-agnostic way.
 
 ### Internal Methods
 
@@ -374,35 +331,38 @@ Langflow expects a single string input (not a message array). The connector extr
 
 **Authentication**: Uses `x-api-key` header (not `Authorization: Bearer`). The `_build_headers()` method is overridden to set this.
 
-**Response parsing**: Returns the raw response dict unchanged after validating it is a dict.
+**Response parsing**: Maps Langflow responses into standardized
+`ChatAgentResponse` objects.
 
 #### Configuration Example
 
 ```python
 from sdg_hub.core.connectors import ConnectorConfig, LangflowConnector
+from mlflow.types.agent import ChatAgentMessage, ChatAgentRequest, ChatContext
 
 config = ConnectorConfig(
     url="http://localhost:7860/api/v1/run/my-flow",
     api_key="your-api-key",
 )
 connector = LangflowConnector(config=config)
-response = connector.send(
-    messages=[{"role": "user", "content": "Hello!"}],
-    session_id="session-123",
+request = ChatAgentRequest(
+    messages=[ChatAgentMessage(role="user", content="Hello!")],
+    context=ChatContext(conversation_id="session-123"),
 )
+response = connector.send(request)
 ```
 
-#### Response Field Extraction
+#### Standardized Response Mapping
 
-The `LangflowConnector` overrides all three extraction class methods:
+`LangflowConnector.parse_response()` maps Langflow output into
+`ChatAgentResponse`:
 
-- **`extract_text(response)`**: Navigates `outputs[0].outputs[0].results.message.text`. Returns `""` if the text field is explicitly `None`.
-- **`extract_session_id(response)`**: Reads `response["session_id"]`. Returns `""` if explicitly `None`.
-- **`extract_tool_trace(response)`**: Looks for content blocks at two paths:
-    - `outputs[0].outputs[0].results.message.data.content_blocks`
-    - `outputs[0].outputs[0].results.message.content_blocks`
-
-    Returns the `contents` list from the first matching content block (the "Agent Steps" block with structured `tool_use` entries).
+- Extracts final assistant text from
+  `outputs[0].outputs[0].results.message.text`.
+- Converts Langflow tool steps (`tool_use`) into assistant `tool_calls` and
+  matching `tool` result messages.
+- Copies top-level `session_id` into `custom_outputs["session_id"]` when
+  available.
 
 ---
 
@@ -441,7 +401,8 @@ The `config` key is only included when `run_config` is non-empty.
 
 **Authentication**: Uses `x-api-key` header, same as Langflow.
 
-**Response parsing**: Validates the response is a non-empty dict. Logs a warning if no `messages` key is present.
+**Response parsing**: Validates the response and maps the final graph state
+into standardized `ChatAgentResponse` messages.
 
 #### Additional Fields
 
@@ -456,6 +417,7 @@ The `config` key is only included when `run_config` is non-empty.
 
 ```python
 from sdg_hub.core.connectors import ConnectorConfig, LangGraphConnector
+from mlflow.types.agent import ChatAgentMessage, ChatAgentRequest, ChatContext
 
 config = ConnectorConfig(
     url="http://localhost:2024",
@@ -467,18 +429,23 @@ connector = LangGraphConnector(
     run_config={"configurable": {"model": "gpt-4o"}},
 )
 response = connector.send(
-    messages=[{"role": "user", "content": "Hello!"}],
-    session_id="session-123",
+    ChatAgentRequest(
+        messages=[ChatAgentMessage(role="user", content="Hello!")],
+        context=ChatContext(conversation_id="session-123"),
+    )
 )
 ```
 
-#### Response Field Extraction
+#### Standardized Response Mapping
 
-- **`extract_text(response)`**: Finds the last message with `type` or `role` equal to `"ai"` or `"assistant"` in `response["messages"]` and returns its `content`. Returns `""` if content is explicitly `None`.
-- **`extract_session_id(response)`**: Always returns `None`. LangGraph uses thread-based state with no top-level session ID in the run response.
-- **`extract_tool_trace(response)`**: Iterates through `response["messages"]` and collects:
-    - AI messages with `tool_calls` as `{"type": "tool_use", "tool_calls": [...]}`.
-    - Tool result messages as `{"type": "tool_result", "name": "...", "content": "...", "tool_call_id": "..."}`.
+`LangGraphConnector.parse_response()` maps the final graph state into
+`ChatAgentResponse`:
+
+- Converts LangGraph message roles/types (`human`, `ai`, `tool`, `system`) to
+  standardized chat roles.
+- Converts LangGraph tool call entries into assistant `tool_calls` with
+  `function` payloads.
+- Emits tool result entries as standardized `role="tool"` messages.
 
 ---
 
@@ -502,6 +469,7 @@ block = AgentBlock(
     output_cols=["response"],
 )
 result_df = block.generate(df)
+# "response" now contains ChatAgentResponse.model_dump() dictionaries
 ```
 
 Internally, `AgentBlock._get_connector()` does the following:
@@ -723,7 +691,6 @@ To add a new agent framework connector:
 3. Implement `build_request()` and `parse_response()`.
 4. Register with `@ConnectorRegistry.register("name")`.
 5. Optionally override `_build_headers()` for custom authentication.
-6. Optionally override the `extract_*` class methods for response field extraction.
 
 ### Complete Example
 
@@ -732,6 +699,7 @@ To add a new agent framework connector:
 
 from typing import Any
 
+from mlflow.types.agent import ChatAgentMessage, ChatAgentRequest, ChatAgentResponse
 from sdg_hub.core.connectors import BaseAgentConnector, ConnectorError, ConnectorRegistry
 
 
@@ -748,35 +716,30 @@ class MyFrameworkConnector(BaseAgentConnector):
 
     def build_request(
         self,
-        messages: list[dict[str, Any]],
-        session_id: str,
+        request: ChatAgentRequest,
     ) -> dict[str, Any]:
-        """Convert standard messages to MyFramework format."""
+        """Convert standardized request to MyFramework format."""
+        session_id = (
+            request.context.conversation_id if request.context else "default"
+        ) or "default"
         return {
             "conversation_id": session_id,
             "messages": [
-                {"sender": msg["role"], "text": msg["content"]}
-                for msg in messages
+                {"sender": msg.role, "text": msg.content or ""}
+                for msg in request.messages
             ],
         }
 
-    def parse_response(self, response: dict[str, Any]) -> dict[str, Any]:
-        """Validate and return the response."""
+    def parse_response(self, response: dict[str, Any]) -> ChatAgentResponse:
+        """Validate and map response to ChatAgentResponse."""
         if not isinstance(response, dict):
             raise ConnectorError(
                 f"Expected dict response, got {type(response).__name__}"
             )
-        return response
-
-    @classmethod
-    def extract_text(cls, response: dict[str, Any]) -> str | None:
-        """Extract text from MyFramework response."""
-        return response.get("reply", {}).get("text")
-
-    @classmethod
-    def extract_session_id(cls, response: dict[str, Any]) -> str | None:
-        """Extract session ID from MyFramework response."""
-        return response.get("conversation_id")
+        text = response.get("reply", {}).get("text", "")
+        return ChatAgentResponse(
+            messages=[ChatAgentMessage(role="assistant", content=text)]
+        )
 ```
 
 After creating the file, add the import to `src/sdg_hub/core/connectors/agent/__init__.py`:

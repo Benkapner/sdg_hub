@@ -121,19 +121,21 @@ result = block(dataset)
 
 ## AgentResponseExtractorBlock
 
-Extracts text content, session IDs, and tool traces from raw agent framework response objects. Designed to run after `AgentBlock` to parse framework-specific response structures into flat columns. Delegates parsing to the connector class registered for the specified `agent_framework`.
+Extracts text content, session IDs, and tool traces from standardized
+`ChatAgentResponse.model_dump()` dictionaries. Designed to run after
+`AgentBlock`, which already normalizes connector responses into a common
+format.
 
 ### Configuration
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `block_name` | `str` | required | Unique identifier for this block instance |
-| `agent_framework` | `str` | required | Agent framework whose response format to parse (e.g., `"langflow"`) |
 | `input_cols` | `list[str]` | required | Single input column containing response objects (dict or list of dicts) |
 | `output_cols` | `list[str]` | auto-derived | Automatically computed from enabled extraction fields and prefix |
 | `extract_text` | `bool` | `true` | Extract text content from responses |
 | `extract_session_id` | `bool` | `false` | Extract session ID from responses |
-| `extract_tool_trace` | `bool` | `false` | Extract the full tool call trace (for Langflow: content_blocks with tool_use entries) |
+| `extract_tool_trace` | `bool` | `false` | Extract the tool trace from standardized messages (`assistant` messages with `tool_calls` plus `tool` messages) |
 | `expand_lists` | `bool` | `true` | Expand list inputs into individual rows (`true`) or preserve as lists (`false`) |
 | `field_prefix` | `str` | `""` | Prefix for output field names. Empty default uses `block_name_` as prefix. Example: `"agent_"` produces `"agent_text"`, `"agent_session_id"`. |
 
@@ -147,14 +149,13 @@ import pandas as pd
 
 block = AgentResponseExtractorBlock(
     block_name="extract_response",
-    agent_framework="langflow",
     input_cols=["agent_response"],
     extract_text=True,
     extract_session_id=True,
     field_prefix="lf_",
 )
 
-# Assume agent_response column contains raw Langflow response dicts
+# Assume agent_response column contains ChatAgentResponse.model_dump() dicts
 result = block(dataset)
 # result now has columns: "lf_text", "lf_session_id"
 ```
@@ -165,7 +166,6 @@ result = block(dataset)
 - block_type: "AgentResponseExtractorBlock"
   block_config:
     block_name: "extract_response"
-    agent_framework: "langflow"
     input_cols:
       - "agent_response"
     extract_text: true
@@ -194,7 +194,6 @@ blocks:
   - block_type: "AgentResponseExtractorBlock"
     block_config:
       block_name: "extract_text"
-      agent_framework: "langflow"
       input_cols:
         - "raw_response"
       extract_text: true

@@ -313,36 +313,25 @@ under `src/sdg_hub/core/connectors/agent/`.
 4. Implement required methods.
 
 ```python
+from mlflow.types.agent import ChatAgentRequest, ChatAgentResponse
 from sdg_hub.core.connectors.agent.base import BaseAgentConnector
 from sdg_hub.core.connectors.registry import ConnectorRegistry
 
 
 @ConnectorRegistry.register("myframework")
 class MyFrameworkConnector(BaseAgentConnector):
-    def build_request(self, **kwargs):
+    def build_request(self, request: ChatAgentRequest):
         # Build the HTTP request for the agent framework
         ...
 
-    def parse_response(self, response):
-        # Parse the raw response
-        return response
-
-    @classmethod
-    def extract_text(cls, response):
-        # Extract text from agent response (used by AgentResponseExtractorBlock)
-        return None
-
-    @classmethod
-    def extract_session_id(cls, response):
-        return None
-
-    @classmethod
-    def extract_tool_trace(cls, response):
-        return None
+    def parse_response(self, response: dict) -> ChatAgentResponse:
+        # Parse raw response into standardized ChatAgentResponse
+        ...
 ```
 
-The `extract_*` class methods are used by `AgentResponseExtractorBlock`
-to extract structured data from agent responses without changing block code.
+`AgentResponseExtractorBlock` reads standardized response dictionaries emitted
+by `AgentBlock`, so custom connectors should encode framework details inside
+the `ChatAgentResponse` they return.
 
 ## Git Workflow
 
