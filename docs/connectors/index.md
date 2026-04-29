@@ -266,7 +266,9 @@ async def asend(
 
 Implements the `BaseConnector.execute()` interface by converting legacy
 `{"messages": ..., "session_id": ...}` dict input into a `ChatAgentRequest`,
-then returning `ChatAgentResponse.model_dump()`.
+then returning `ChatAgentResponse.model_dump()`. When message items are dicts,
+optional `name`, `tool_call_id`, and `tool_calls` values are preserved during
+normalization.
 
 ```python
 def execute(self, request: dict[str, Any]) -> dict[str, Any]:

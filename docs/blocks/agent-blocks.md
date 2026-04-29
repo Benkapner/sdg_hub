@@ -30,7 +30,8 @@ Executes external agent frameworks (such as Langflow or LangGraph) on each row o
 The messages column accepts three formats:
 
 - **Plain text string** -- wrapped as `[{"role": "user", "content": "..."}]`
-- **Single message dict** -- wrapped in a list: `[{"role": "user", "content": "..."}]`
+- **Single message dict** -- wrapped in a list while preserving optional `name`,
+  `tool_call_id`, and `tool_calls` fields
 - **List of message dicts** -- used as-is for multi-turn conversations
 
 ### Python Example
