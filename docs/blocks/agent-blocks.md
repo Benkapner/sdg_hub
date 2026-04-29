@@ -34,6 +34,9 @@ The messages column accepts three formats:
   `tool_call_id`, and `tool_calls` fields
 - **List of message dicts** -- used as-is for multi-turn conversations
 
+When `tool_calls` are present, non-string `function.arguments` values (for
+example dicts/lists) are JSON-serialized before dispatch.
+
 ### Python Example
 
 ```python

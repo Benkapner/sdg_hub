@@ -268,7 +268,8 @@ Implements the `BaseConnector.execute()` interface by converting legacy
 `{"messages": ..., "session_id": ...}` dict input into a `ChatAgentRequest`,
 then returning `ChatAgentResponse.model_dump()`. When message items are dicts,
 optional `name`, `tool_call_id`, and `tool_calls` values are preserved during
-normalization.
+normalization. Non-string `tool_calls[*].function.arguments` values are
+JSON-serialized so they match the expected string type.
 
 ```python
 def execute(self, request: dict[str, Any]) -> dict[str, Any]:
