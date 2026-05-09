@@ -398,7 +398,7 @@ of the following are true:
 
 - The PR has the `agent-pr` label
 - At least one GitHub review is in the `APPROVED` state
-- A reviewer or maintainer has added a `/merge` PR comment
+- A trusted author (`OWNER`, `MEMBER`, or `COLLABORATOR`) has added `/merge` as an exact PR comment
 - All CI checks are passing
 - The PR does not have the `needs-human-review` label
 
