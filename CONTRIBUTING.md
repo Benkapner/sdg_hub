@@ -94,6 +94,10 @@ uv run mypy src/
 6. **Address** review feedback
 7. A maintainer will merge when approved
 
+For agent-maintained PRs, auto-merge also requires all CI checks to pass, an
+evaluator comment containing `PASS`, a maintainer comment containing `/merge`,
+and no `needs-human-review` label.
+
 ### Commit Messages
 
 Format: `<type>(<scope>): <description>`
