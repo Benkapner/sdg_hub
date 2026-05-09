@@ -484,12 +484,12 @@ test output.
   it on next session resumption or @mention
 - **Reassign:** Move issue to a different agent or back to human
 
-**Via file-based hooks (backup, for local Claude Code sessions):**
+**Via file-based hooks (current local safety net):**
 
-- **Kill switch** (`kill-switch.sh`, PreToolUse on `*`): If `AGENT_STOP`
-  file exists, blocks every tool call.
-- **Steer file** (`steer.sh`, PreToolUse on `*`): If `STEER.md` has
-  content, injects it once into agent context.
+- **Evidence gate** (`track-read.sh` + `verify-gate.sh`): Requires agents to
+  read test or execution evidence before writing result claims.
+- **Auto-commit on stop** (`commit-on-stop.sh`, Stop hook): Persists
+  work-in-progress at session end.
 
 ### 5.6 Session Continuity
 
@@ -742,12 +742,10 @@ eval/score.py
 # Agent hooks
 .claude/hooks/track-read.sh
 .claude/hooks/verify-gate.sh
-.claude/hooks/kill-switch.sh
-.claude/hooks/steer.sh
 .claude/hooks/commit-on-stop.sh
 
 # Agent subagents
-.claude/agents/evaluator.md
+# No static .claude/agents files; subagents are created dynamically at runtime.
 
 # Workflows (CI-only — agent-driven tasks handled by Multica Autopilots)
 .github/workflows/auto-merge.yml
