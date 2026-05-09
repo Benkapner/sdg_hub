@@ -55,7 +55,7 @@ When reading raw markdown, refer to the quick reference below.
 | Class | Import | Description |
 |-------|--------|-------------|
 | AgentBlock | `from sdg_hub.core.blocks import AgentBlock` | Execute agent frameworks (Langflow, etc.) on DataFrame rows |
-| AgentResponseExtractorBlock | `from sdg_hub.core.blocks.agent.agent_response_extractor_block import AgentResponseExtractorBlock` | Extracts text content from agent framework responses |
+| AgentResponseExtractorBlock | `from sdg_hub.core.blocks.agent.agent_response_extractor_block import AgentResponseExtractorBlock` | Extracts text, session IDs, and tool traces from agent framework responses |
 
 ### MCP Blocks
 

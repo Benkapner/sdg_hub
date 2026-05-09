@@ -139,6 +139,12 @@ Extracts text content, session IDs, and tool traces from raw agent framework res
 
 At least one of `extract_text`, `extract_session_id`, or `extract_tool_trace` must be enabled.
 
+Behavior notes:
+
+- Requested extraction columns are always emitted for valid response dicts.
+- Missing `text` and `session_id` values are set to `None`; missing `tool_trace` is set to `[]`.
+- Missing fields are logged as warnings instead of causing extraction failures.
+
 ### Python Example
 
 ```python
