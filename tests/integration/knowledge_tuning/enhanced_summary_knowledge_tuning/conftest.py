@@ -50,5 +50,3 @@ def notebook_path():
     return Path(
         "examples/knowledge_tuning/enhanced_summary_knowledge_tuning/knowledge_generation.ipynb"
     )
-
-
