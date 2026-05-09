@@ -31,7 +31,7 @@ runs validation and logging around the `generate` method automatically:
 1. Log input data summary (columns, row count).
 2. Validate the DataFrame is not empty.
 3. Validate required `input_cols` exist.
-4. Validate `output_cols` do not collide with existing columns.
+4. Validate `output_cols` against existing columns using block-specific rules.
 5. Run any custom validation (`_validate_custom`).
 6. Call `generate(samples, **kwargs)`.
 7. Log output data summary (added/removed columns, row counts).
@@ -266,8 +266,10 @@ If any are missing, `MissingColumnError` is raised.
 ### output_cols
 
 Specifies which columns a block creates. Before `generate()` runs, the
-framework checks that none of the `output_cols` already exist in the
-DataFrame. If any collide, `OutputColumnCollisionError` is raised.
+framework checks that `output_cols` are valid for that block type. For most
+blocks this means output columns must not already exist in the DataFrame. For
+`RenameColumnsBlock`, atomic rename maps are supported as long as the target
+name does not collide with a column outside the same rename mapping.
 
 ### Column formats
 

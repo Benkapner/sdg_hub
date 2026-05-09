@@ -104,7 +104,7 @@ print(result.columns.tolist())
 
 ## RenameColumnsBlock
 
-Renames columns in a dataset according to a mapping provided through `input_cols` as a dictionary. Does not support chained or circular renames -- target names must not already exist in the dataset.
+Renames columns in a dataset according to a mapping provided through `input_cols` as a dictionary. Renames are applied atomically (matching pandas behavior), so swapping names within one block is allowed. Target names still must not collide with columns that are not being renamed in the same block.
 
 ### Configuration
 
@@ -145,6 +145,11 @@ print(result.columns.tolist())
       q: "question"
       a: "answer"
 ```
+
+Behavior notes:
+
+- The rename map is applied in a single operation, so mappings like `{"a": "b", "b": "a"}` are valid.
+- A target name that already exists and is not part of the same rename map raises a validation error.
 
 ---
 

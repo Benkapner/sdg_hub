@@ -27,6 +27,8 @@ The `FlowValidator` (source: `src/sdg_hub/core/flow/validation.py`) enforces:
 - Each block must have `block_type` and `block_config` keys.
 - Each `block_config` must contain `block_name`.
 - `metadata`, if present, must be a dict with a non-empty `name` string.
+- `metadata.output_columns` (when set) must be reachable from dataset requirements plus block outputs.
+- `RenameColumnsBlock` mappings cannot target historical column names that were previously present but already renamed or dropped.
 
 ---
 
@@ -45,7 +47,13 @@ Source: `src/sdg_hub/core/flow/metadata.py` -- class `FlowMetadata`
 | `tags` | `list[str]` | No | `[]` | Tags for categorization. Automatically lowercased. |
 | `recommended_models` | `RecommendedModels` | No | `None` | Model recommendations (see below). |
 | `dataset_requirements` | `DatasetRequirements` | No | `None` | Input dataset validation rules (see below). |
-| `output_columns` | `list[str]` | No | `None` | Columns to keep in final output. Original input columns are always preserved. When set, intermediate columns are dropped during and after execution. Must be non-empty if specified; omit entirely to keep all columns. |
+| `output_columns` | `list[str]` | No | `None` | Columns to keep in final output. Original input columns are always preserved. When set, intermediate columns are dropped during and after execution. Must be non-empty if specified; omit entirely to keep all columns. Validation fails if any declared column cannot be produced by the block chain. |
+
+### Validation notes for output columns and renames
+
+- `output_columns` are checked during YAML validation and again before `generate()` / `dry_run()`. If a name is close to an available column, the error includes a `Did you mean` suggestion.
+- Rename history is tracked through the flow. Reusing a previously existing name after it was renamed away is rejected as a likely configuration bug.
+- Atomic rename maps are supported in a single `RenameColumnsBlock` (for example, swapping two names in one mapping).
 
 ### recommended_models
 
