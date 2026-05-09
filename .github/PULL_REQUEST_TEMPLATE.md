@@ -19,4 +19,4 @@
 <!-- Filled by agent PRs -->
 - **Agent:** <!-- claude-code | cursor | human -->
 - **Confidence:** <!-- high | medium | low -->
-- **Auto-merge eligible:** <!-- yes | no -->
+- **Auto-merge eligible:** <!-- yes | no (agent-pr + approval + /merge + CI green + no needs-human-review) -->

@@ -391,6 +391,20 @@ test(connectors): add integration tests for LangGraph connector
 5. Address review feedback.
 6. Squash and merge when approved.
 
+### Agent PR Auto-merge
+
+Agent PRs can be merged by `.github/workflows/auto-merge.yml` only when all
+of the following are true:
+
+- The PR has the `agent-pr` label
+- At least one GitHub review is in the `APPROVED` state
+- A reviewer or maintainer has added a `/merge` PR comment
+- All CI checks are passing
+- The PR does not have the `needs-human-review` label
+
+When a PR is merged by this workflow, it adds the `agent-merged` label for
+tracking.
+
 ## Docstring Guidelines
 
 Docstrings are optional but recommended for public API functions, complex
