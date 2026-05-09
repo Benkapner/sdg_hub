@@ -171,6 +171,13 @@ Integration tests are gated: they run on push to `main`, on
 `workflow_dispatch`, or on PRs with the `run-integration-tests` label
 when relevant paths change.
 
+For docs-related pull requests, `docs-preview.yml` also runs when
+`docs/**`, `website/**`, `mkdocs.yml`, or
+`.github/workflows/docs-preview.yml` changes. It builds the docs site,
+deploys a preview to `https://sdg-hub-pr-<PR_NUMBER>.surge.sh`, comments
+the URL on the PR, and tears down the preview when the PR is closed.
+This workflow requires the `SURGE_TOKEN` repository secret.
+
 ## Contributing Blocks
 
 Blocks live under `src/sdg_hub/core/blocks/` in category directories:
