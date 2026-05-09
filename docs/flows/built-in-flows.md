@@ -48,7 +48,7 @@ Common input columns: `document`, `document_outline`, `domain`,
 `icl_document`, `icl_query_1`, `icl_query_2`, `icl_query_3` (except Key Facts,
 which does not require `icl_*` columns).
 
-Common output columns: `question`, `response`, `document`,
+Common output columns: `question`, `response`, `summarized_document`,
 `faithfulness_explanation`, `faithfulness_judgment` (plus variant-specific
 columns).
 
