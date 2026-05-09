@@ -90,7 +90,7 @@ OpenShift Namespace: sdg-hub-agents
 ├── multica-frontend    (Deployment + Service + Route)
 │   └── ghcr.io/multica-ai/multica-web
 └── multica-daemon      (Deployment + PVC)
-    └── Custom image with Claude Code CLI
+    └── Custom image with Claude Code CLI and GitHub CLI (`gh`)
         └── Spawns Claude Code processes per task
         └── Workspaces persisted on PVC
 ```
