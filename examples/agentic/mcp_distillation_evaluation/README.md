@@ -43,7 +43,7 @@ Only the underlying LLM changes. This means you're evaluating your full agent st
 |------|-------------|
 | `eval_utils.py` | Shared utilities: trace normalization, formatting, programmatic metrics |
 | `start_servers.sh` | Start/stop/check MCP servers (native FastMCP for Python servers) |
-| `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support |
+| `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support and strict MCP tool-use prompting |
 | `.env.example` | Template for API keys and agent URLs |
 
 ## Quick start
@@ -64,6 +64,9 @@ cp .env.example .env  # add your OPENAI_API_KEY
 # 4. Generate evaluation tasks (generate.ipynb)
 # 5. Evaluate models (evaluate.ipynb)
 ```
+
+`start_agents.sh` now injects a strict system prompt that forces at least one MCP
+tool call before the agent can answer, which keeps traces grounded in real tool outputs.
 
 ## Results
 
