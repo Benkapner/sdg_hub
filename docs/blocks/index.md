@@ -87,7 +87,7 @@ dedicated documentation page.
 | **llm** | `LLMChatBlock`, `PromptBuilderBlock`, `LLMResponseExtractorBlock` | [LLM Blocks](llm-blocks.md) |
 | **parsing** | `TagParserBlock`, `RegexParserBlock`, `JSONParserBlock` | [Parsing Blocks](parsing-blocks.md) |
 | **transform** | `TextConcatBlock`, `DuplicateColumnsBlock`, `RenameColumnsBlock`, `MeltColumnsBlock`, `RowMultiplierBlock`, `IndexBasedMapperBlock`, `SamplerBlock`, `UniformColumnValueSetter`, `JSONStructureBlock` | [Transform Blocks](transform-blocks.md) |
-| **filtering** | `ColumnValueFilterBlock` | [Filtering Blocks](filtering-blocks.md) |
+| **filtering** | `ColumnValueFilterBlock`, `SimilarityFilterBlock` | [Filtering Blocks](filtering-blocks.md) |
 | **agent** | `AgentBlock`, `AgentResponseExtractorBlock` | [Agent Blocks](agent-blocks.md) |
 | **mcp** | `MCPAgentBlock` | [Agent Blocks](agent-blocks.md) |
 | **code** | `PythonInterpreterBlock` | [Code Blocks](code-blocks.md) |

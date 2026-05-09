@@ -49,6 +49,7 @@ When reading raw markdown, refer to the quick reference below.
 | Class | Import | Description |
 |-------|--------|-------------|
 | ColumnValueFilterBlock | `from sdg_hub.core.blocks import ColumnValueFilterBlock` | Filters datasets based on column values using comparison operations |
+| SimilarityFilterBlock | `from sdg_hub.core.blocks import SimilarityFilterBlock` | Removes near-duplicate rows using configurable text similarity thresholds |
 
 ### Agent Blocks
 
@@ -176,6 +177,11 @@ When reading raw markdown, refer to the quick reference below.
 ### Filtering Blocks
 
 ::: sdg_hub.core.blocks.filtering.column_value_filter.ColumnValueFilterBlock
+    options:
+      members_order: source
+      show_source: false
+
+::: sdg_hub.core.blocks.filtering.similarity_filter.SimilarityFilterBlock
     options:
       members_order: source
       show_source: false

@@ -162,3 +162,87 @@ Behavior notes:
 - Rows with `None`/`NaN` values in the filter column are always removed.
 - When `convert_dtype` is set, values that fail conversion are set to `None` and filtered out.
 - Multiple `filter_value` entries use OR logic: a row passes if it matches any value.
+
+---
+
+## SimilarityFilterBlock
+
+Removes near-duplicate rows by comparing text similarity with Python's
+`difflib.SequenceMatcher`. The block keeps the first occurrence and drops
+later rows whose similarity to any kept row is greater than `threshold`.
+
+### Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `block_name` | `str` | required | Unique identifier for this block instance |
+| `input_cols` | `list[str]` | required | At least one column. Only the first column is used for similarity comparisons. |
+| `threshold` | `float` | `0.85` | Similarity threshold in `[0.0, 1.0]`. Rows above this value are treated as duplicates. |
+| `group_by` | `str` or `null` | `null` | Optional grouping column. If set, deduplication is applied within each group. |
+
+### Python Example -- Global Deduplication
+
+```python
+from sdg_hub.core.blocks import SimilarityFilterBlock
+import pandas as pd
+
+block = SimilarityFilterBlock(
+    block_name="dedup_questions",
+    input_cols=["question"],
+    threshold=0.8,
+)
+
+dataset = pd.DataFrame({
+    "question": [
+        "What is photosynthesis and how does it work?",
+        "What is photosynthesis and how does it function?",
+        "Explain sourdough bread starter maintenance.",
+    ]
+})
+
+result = block(dataset)
+print(result["question"].tolist())
+# Output (2 rows): first photosynthesis row + sourdough row
+```
+
+### Python Example -- Group-Scoped Deduplication
+
+```python
+from sdg_hub.core.blocks import SimilarityFilterBlock
+import pandas as pd
+
+block = SimilarityFilterBlock(
+    block_name="dedup_per_document",
+    input_cols=["text"],
+    threshold=0.8,
+    group_by="doc_id",
+)
+
+dataset = pd.DataFrame({
+    "doc_id": ["doc_a", "doc_a", "doc_b"],
+    "text": ["same text", "same text", "same text"],
+})
+
+result = block(dataset)
+print(len(result))
+# Output: 2 (one kept for doc_a, one kept for doc_b)
+```
+
+### YAML Example
+
+```yaml
+- block_type: "SimilarityFilterBlock"
+  block_config:
+    block_name: "dedup_questions"
+    input_cols:
+      - "question"
+    threshold: 0.8
+    group_by: "document_id"
+```
+
+Behavior notes:
+
+- `threshold` uses strict `>` comparison (`1.0` keeps all rows).
+- If `group_by` is configured but the column is missing, the block logs a warning and falls back to global deduplication.
+- `group_by` grouping keeps rows where the group value is `NaN` (`dropna=False`).
+- Empty strings compare as identical (`1.0` similarity), and `None` values are compared via string coercion.
