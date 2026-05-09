@@ -52,7 +52,7 @@ oc -n sdg-hub-agents get pods -w
 ### 4. Generate daemon token
 
 1. Open the Multica UI at `https://multica.apps.YOUR_CLUSTER_DOMAIN`
-2. Log in (use verification code `888888` in dev mode)
+2. Sign up or log in using your configured production auth provider
 3. Go to **Settings → Runtimes → Add Runtime**
 4. Copy the daemon token
 5. Update the secret:
@@ -97,9 +97,9 @@ OpenShift Namespace: sdg-hub-agents
 
 ## Security Notes
 
-- The `APP_ENV=development` and `MULTICA_DEV_VERIFICATION_CODE` settings
-  are for initial setup only. Switch to email auth (Resend) or OAuth
-  for production use.
+- The manifests default to `APP_ENV=production` and do not set
+  `MULTICA_DEV_VERIFICATION_CODE`. Configure email auth (Resend) or
+  OAuth before onboarding users.
 - The daemon runs with `--permission-mode bypassPermissions` which gives
   Claude Code full filesystem access. This is by design for autonomous
   operation.

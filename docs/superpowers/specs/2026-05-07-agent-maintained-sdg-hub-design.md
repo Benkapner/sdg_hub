@@ -504,12 +504,11 @@ Auto-commits tracked changes at session end.
 
 New GitHub Action (`auto-merge.yml`):
 
-Triggers: when all CI checks pass on a PR.
+Triggers: on submitted PR reviews; merge proceeds only when checks are green.
 
 Conditions for auto-merge:
-- PR author is `claude-code-action[bot]` or agent-created
-- All CI checks pass (8 existing + structural tests + knowledge validation)
-- Evaluator agent posted `PASS` verdict on the Multica issue
+- PR author is `claude-code-action[bot]` or `cursor-code-review[bot]`
+- All CI checks are `SUCCESS` or `SKIPPED`
 - No `needs-human-review` label
 - PR is not from a fork (external contribution)
 
