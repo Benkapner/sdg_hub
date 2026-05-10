@@ -403,6 +403,16 @@ extractor_flat = LLMResponseExtractorBlock(
 )
 ```
 
+### Missing Fields and Defaults
+
+Requested output columns are always created based on your extraction settings. If a requested field is missing or set to `None`, the block fills a default value:
+
+- `content` -> `""`
+- `reasoning_content` -> `""`
+- `tool_calls` -> `[]`
+
+For list inputs, responses with missing fields are still kept in the output. Only the extracted value falls back to the default.
+
 ### YAML Example
 
 ```yaml
