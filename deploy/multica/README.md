@@ -39,6 +39,9 @@ docker build -f Dockerfile.daemon -t quay.io/YOUR_ORG/multica-daemon:latest .
 docker push quay.io/YOUR_ORG/multica-daemon:latest
 ```
 
+For the UBI-based daemon image path, `Dockerfile` now includes `uv`, `jupyter`,
+`nbconvert`, and `papermill` so notebook-driven validation can run in CI.
+
 ### 3. Deploy to OpenShift
 
 ```bash
