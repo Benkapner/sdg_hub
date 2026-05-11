@@ -171,6 +171,10 @@ Integration tests are gated: they run on push to `main`, on
 `workflow_dispatch`, or on PRs with the `run-integration-tests` label
 when relevant paths change.
 
+The Quality Score Gate workflow (`.github/workflows/score-gate.yml`) is also
+path-filtered and runs only when a PR changes `src/**`, `tests/**`, `eval/**`,
+`pyproject.toml`, or the workflow file itself.
+
 ## Contributing Blocks
 
 Blocks live under `src/sdg_hub/core/blocks/` in category directories:

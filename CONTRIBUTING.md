@@ -134,6 +134,10 @@ All PRs must pass these automated checks before merging:
 | Markdown linting | `markdownlint-cli2` |
 | GitHub Actions lint | `actionlint` |
 
+The Quality Score Gate workflow (`.github/workflows/score-gate.yml`) is
+path-filtered and runs only when a PR changes `src/**`, `tests/**`, `eval/**`,
+`pyproject.toml`, or the workflow file itself.
+
 ## Contributing Blocks, Flows, and Connectors
 
 For detailed contribution workflows -- including how to structure new
