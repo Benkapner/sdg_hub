@@ -339,6 +339,8 @@ At least one of `extract_content`, `extract_reasoning_content`, or `extract_tool
 
 The `output_cols` field is computed automatically from the extraction settings and prefix. You do not set it manually.
 
+When a requested field is missing (or `None`) in a response, the block still returns the configured output columns using safe defaults: `""` for `content` and `reasoning_content`, and `[]` for `tool_calls`. This keeps row counts stable for both single responses and list expansion modes.
+
 ### Python Example
 
 ```python
