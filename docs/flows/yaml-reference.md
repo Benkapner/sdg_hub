@@ -27,6 +27,9 @@ The `FlowValidator` (source: `src/sdg_hub/core/flow/validation.py`) enforces:
 - Each block must have `block_type` and `block_config` keys.
 - Each `block_config` must contain `block_name`.
 - `metadata`, if present, must be a dict with a non-empty `name` string.
+- `RenameColumnsBlock` targets cannot reuse column names that appeared earlier
+  in the flow (including dataset requirement columns), except no-op
+  source-to-same-name renames.
 
 ---
 

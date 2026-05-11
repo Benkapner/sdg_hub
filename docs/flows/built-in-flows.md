@@ -48,9 +48,9 @@ Common input columns: `document`, `document_outline`, `domain`,
 `icl_document`, `icl_query_1`, `icl_query_2`, `icl_query_3` (except Key Facts,
 which does not require `icl_*` columns).
 
-Common output columns: `question`, `response`, `document`,
-`faithfulness_explanation`, `faithfulness_judgment` (plus variant-specific
-columns).
+Common output columns: `question`, `response`, and the source `document`.
+Summary-based variants also emit `summary`, `faithfulness_explanation`, and
+`faithfulness_judgment` (plus variant-specific columns).
 
 #### Extractive Summary (epic-jade-656)
 
@@ -58,15 +58,15 @@ Pipeline: Document --> Extractive Summary (n=50) --> Question List --> Answers -
 
 Extracts 2-4 key passages per document section and annotates each with context
 markers, relevance ratings, and relationships to other extracts. Output includes
-`raw_document`.
+the generated `summary` plus the original `document`.
 
 #### Detailed Summary (mild-thunder-748)
 
 Pipeline: Document --> Detailed Summary (n=50) --> Question List --> Answers --> Faithfulness Check --> Filtered QA
 
 Generates high-level summaries focusing on overarching themes, main arguments,
-and core principles. Abstractive rather than extractive. Output includes
-`raw_document`.
+and core principles. Abstractive rather than extractive. Output includes the
+generated `summary` plus the original `document`.
 
 #### Key Facts (heavy-heart-77)
 

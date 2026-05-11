@@ -104,7 +104,11 @@ print(result.columns.tolist())
 
 ## RenameColumnsBlock
 
-Renames columns in a dataset according to a mapping provided through `input_cols` as a dictionary. Does not support chained or circular renames -- target names must not already exist in the dataset.
+Renames columns in a dataset according to a mapping provided through `input_cols`
+as a dictionary. Does not support chained or circular renames. During flow
+validation, target names must be new to the flow and cannot reuse a column name
+that appeared earlier (from dataset requirements or prior block outputs),
+except no-op renames where source and target are identical.
 
 ### Configuration
 
