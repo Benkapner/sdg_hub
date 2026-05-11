@@ -162,6 +162,12 @@ uv run mkdocs serve
 The site renders at `http://localhost:8000`. API reference is auto-generated
 from docstrings via [mkdocstrings](https://mkdocstrings.github.io/).
 
+PRs that change docs from branches in this repository get an automatic
+preview comment from `.github/workflows/docs-preview.yml` when targeting
+`main`. Fork PRs receive a notice instead because repository secrets are
+not exposed to fork workflows, and previews are marked as torn down when
+the PR is closed.
+
 ## Community Guidelines
 
 - Be respectful and inclusive in all interactions
