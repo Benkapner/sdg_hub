@@ -74,6 +74,8 @@ metadata:
 
   # Optional: specify which columns to keep in the final output.
   # Original input columns are always preserved.
+  # Each listed column must be present in the input dataset or produced by a block.
+  # Invalid names raise FlowValidationError before execution starts.
   # Omit this field entirely to keep all columns.
   output_columns:
     - "result"
@@ -364,7 +366,9 @@ read these values.
 Set `output_columns` in metadata to control which columns appear in the final
 output. This drops intermediate columns (like raw LLM responses and prompt
 columns) while preserving the original input columns plus the specified output
-columns. If omitted, all columns are kept.
+columns. Each listed column must be an original input column or be produced by
+a block in the flow; invalid names raise `FlowValidationError` before block
+execution starts. If omitted, all columns are kept.
 
 ```yaml
 metadata:

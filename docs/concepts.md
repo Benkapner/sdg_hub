@@ -128,7 +128,8 @@ blocks:
 **metadata** -- flow identity, model recommendations, dataset requirements,
 and output column declarations. When `output_columns` is set, intermediate
 columns are dropped from the final result (original input columns are always
-preserved).
+preserved), and invalid `output_columns` entries raise `FlowValidationError`
+before blocks execute.
 
 **parameters** -- optional flow-level parameters that can be referenced
 in block configs.
@@ -291,7 +292,8 @@ Block 2 sees the original columns plus Block 1's output, and so on.
 
 If the flow's metadata specifies `output_columns`, intermediate columns
 are automatically dropped from the final result. Original input columns
-are always preserved.
+are always preserved, and each listed output column must be present in the
+input dataset or produced by a block.
 
 ## Dataset Handling
 
