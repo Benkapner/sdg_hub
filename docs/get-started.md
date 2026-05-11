@@ -18,11 +18,18 @@ Run this command to install SDG Hub and clone the repository:
 curl -fsSL https://raw.githubusercontent.com/Red-Hat-AI-Innovation-Team/sdg_hub/main/scripts/bootstrap.sh | claude --dangerously-skip-permissions
 ```
 
+To clone into a different directory, set `SDG_HUB_DIR` before running the same command:
+
+```bash
+SDG_HUB_DIR=~/projects/sdg_hub curl -fsSL https://raw.githubusercontent.com/Red-Hat-AI-Innovation-Team/sdg_hub/main/scripts/bootstrap.sh | claude --dangerously-skip-permissions
+```
+
 ### What this does
 
 1. Installs the `sdg-hub` Python package (via `uv` or `pip`)
-2. Clones the SDG Hub repository, which includes the `synthetic-data-generation` Claude Code skill
-3. Verifies the installation by discovering available blocks and flows
+2. Clones the SDG Hub repository to `~/sdg_hub` (or `$SDG_HUB_DIR`), which includes the `synthetic-data-generation` Claude Code skill
+3. Reuses an existing checkout when present by pulling the latest changes with `git pull --ff-only`
+4. Verifies the installation by discovering available blocks and flows
 
 ## Step 2: Start generating data
 
