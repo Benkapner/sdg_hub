@@ -32,8 +32,12 @@ grep -n "REPLACE_WITH" openshift-manifests.yaml
 ### 2. Build and push the daemon image
 
 ```bash
-# Build
+# Build (default Debian-based daemon image)
 docker build -f Dockerfile.daemon -t quay.io/YOUR_ORG/multica-daemon:latest .
+
+# Optional: build the UBI-based daemon image for OpenShift-constrained environments
+# (this image now includes PyJWT and cryptography for JWT-related auth flows)
+docker build -f Dockerfile -t quay.io/YOUR_ORG/multica-daemon:latest .
 
 # Push
 docker push quay.io/YOUR_ORG/multica-daemon:latest
