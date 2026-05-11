@@ -15,7 +15,7 @@ to your current task -- do not load all files at once.
 | [testing-standards.md](testing-standards.md) | What "tested" means and how to write tests | 2026-05-08 |
 | [grading-criteria.md](grading-criteria.md) | Quality criteria with hard thresholds | 2026-05-08 |
 | [decision-rubric.md](decision-rubric.md) | When to auto-fix, flag, or escalate | 2026-05-08 |
-| [QUALITY.md](QUALITY.md) | Quality grades per domain/layer | 2026-05-08 |
+| [QUALITY.md](QUALITY.md) | Quality grades per domain/layer | 2026-05-11 |
 | [tech-debt-tracker.md](tech-debt-tracker.md) | Known debt, prioritized | 2026-05-08 |
 
 ## Progressive Disclosure
