@@ -24,6 +24,13 @@ With summaries in place, we scale up training data via **synthetic Q\&A generati
 * The pipeline uses these seeds to generate a large set of **contextually grounded Q\&A pairs**, tightly linked to the summarized documents.
 * This expands sparse seed data into a **rich, diverse training dataset** suitable for fine-tuning.
 
+### Dataset Schema Note
+
+After the notebook's dataset normalization step, combined datasets use:
+
+* `document` for the original source text
+* `summary` for generated summary/key-fact content used as QA context
+
 ---
 
 ## 3. Quality Control
