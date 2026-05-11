@@ -17,6 +17,7 @@ A module is tested when all of these are true:
 
 ```text
 tests/
+  conftest.py      # Shared fixtures used across test suites
   blocks/          # Block tests, mirroring src/sdg_hub/core/blocks/
     agent/
     code/
@@ -30,10 +31,17 @@ tests/
     agent/
     code_interpreter/
     http/
-  flow/            # Flow system tests
+  flow/            # Flow system tests (flow-only fixtures in flow/conftest.py)
   utils/           # Utility tests
   integration/     # Integration tests (require API keys / external services)
 ```
+
+Fixture placement rules:
+
+- Put reusable fixtures (datasets, common mock blocks, temp dirs) in
+  `tests/conftest.py` so they are available project-wide.
+- Keep suite-specific fixtures in local `conftest.py` files (for example,
+  `tests/flow/conftest.py`) to avoid accidental coupling across test domains.
 
 ## Test File Naming
 
