@@ -51,8 +51,8 @@ subdirectory within a category.
 | Category | Directory | Purpose |
 |----------|-----------|---------|
 | `agentic` | `src/sdg_hub/flows/agentic/` | Agent-based data generation (MCP distillation, etc.) |
-| `evaluation` | `src/sdg_hub/flows/evaluation/` | RAG evaluation, MCP eval benchmarks |
-| `knowledge_infusion` | `src/sdg_hub/flows/knowledge_infusion/` | QA generation from documents |
+| `evaluation` | `src/sdg_hub/flows/evaluation/` | RAG evaluation, RAG evaluation ICL, MCP eval benchmark |
+| `knowledge_infusion` | `src/sdg_hub/flows/knowledge_infusion/` | QA generation from documents (including Spanish and Japanese variants) |
 | `red_team` | `src/sdg_hub/flows/red_team/` | Adversarial prompt generation |
 | `text_analysis` | `src/sdg_hub/flows/text_analysis/` | Structured text analysis pipelines |
 | `code_evaluation` | `src/sdg_hub/flows/code_evaluation/` | Code benchmark generation |
