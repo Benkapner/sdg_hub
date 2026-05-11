@@ -43,7 +43,7 @@ Only the underlying LLM changes. This means you're evaluating your full agent st
 |------|-------------|
 | `eval_utils.py` | Shared utilities: trace normalization, formatting, programmatic metrics |
 | `start_servers.sh` | Start/stop/check MCP servers (native FastMCP for Python servers) |
-| `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support |
+| `start_agents.sh` | Start/stop/check LangGraph agents with configurable model support and a strict tool-use prompt (at least one tool call per answer) |
 | `.env.example` | Template for API keys and agent URLs |
 
 ## Quick start
