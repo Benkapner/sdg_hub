@@ -194,6 +194,10 @@ class MyBlock(BaseBlock):
 The decorator validates that the class inherits from `BaseBlock` and stores a
 `BlockMetadata` dataclass with the provided information.
 
+Validation errors emitted during registration now include structured error
+codes for machine-parseable diagnostics. For example, non-class registration
+inputs raise a `ValueError` like `[REG001] Invalid block type: expected class, got <type>`.
+
 ### `BlockRegistry.discover_blocks()`
 
 ```python
