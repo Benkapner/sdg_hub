@@ -178,7 +178,7 @@ class BlockRegistry:
                 cls._format_error(
                     "REG001",
                     "Invalid block type",
-                    f"expected class, got {type(block_class)}",
+                    f"Expected a class, got {type(block_class)}",
                 )
             )
 
