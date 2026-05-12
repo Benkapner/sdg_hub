@@ -269,6 +269,11 @@ Specifies which columns a block creates. Before `generate()` runs, the
 framework checks that none of the `output_cols` already exist in the
 DataFrame. If any collide, `OutputColumnCollisionError` is raised.
 
+When a flow declares `metadata.output_columns`, SDG Hub traces columns produced
+across the full block chain before execution. For dict-style `output_cols`,
+both dict keys and string dict values are treated as produced column names so
+mapping-based blocks (for example, rename mappings) validate correctly.
+
 ### Column formats
 
 Both `input_cols` and `output_cols` accept multiple formats:

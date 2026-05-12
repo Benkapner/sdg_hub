@@ -45,7 +45,7 @@ Source: `src/sdg_hub/core/flow/metadata.py` -- class `FlowMetadata`
 | `tags` | `list[str]` | No | `[]` | Tags for categorization. Automatically lowercased. |
 | `recommended_models` | `RecommendedModels` | No | `None` | Model recommendations (see below). |
 | `dataset_requirements` | `DatasetRequirements` | No | `None` | Input dataset validation rules (see below). |
-| `output_columns` | `list[str]` | No | `None` | Columns to keep in final output. Original input columns are always preserved. When set, intermediate columns are dropped during and after execution. Must be non-empty if specified; omit entirely to keep all columns. |
+| `output_columns` | `list[str]` | No | `None` | Columns to keep in final output. Original input columns are always preserved. When set, intermediate columns are dropped during and after execution. Must be non-empty if specified; omit entirely to keep all columns. Validation traces block outputs from strings/lists and dict-style `output_cols` (both keys and string values). |
 
 ### recommended_models
 
