@@ -1,6 +1,6 @@
 # Get Started
 
-Get up and running with SDG Hub in two steps using [Claude Code](https://claude.ai/claude-code).
+Get up and running with SDG Hub in two steps using [Claude Code](https://claude.ai/claude-code), then branch out to the same workflow in other supported coding agents.
 
 ## Prerequisites
 
@@ -9,6 +9,10 @@ Get up and running with SDG Hub in two steps using [Claude Code](https://claude.
 
 !!! tip "Prefer manual installation?"
     See the full [Installation](installation.md) guide for pip/uv setup without Claude Code.
+
+!!! info "Using Cursor, Gemini CLI, Codex CLI, or OpenCode?"
+    SDG Hub now ships plugin manifests and command packs for all of these agents.
+    Follow the install instructions in the [Coding Agent Plugin section of the README](https://github.com/Red-Hat-AI-Innovation-Team/sdg_hub#coding-agent-plugin).
 
 ## Step 1: Bootstrap SDG Hub
 
