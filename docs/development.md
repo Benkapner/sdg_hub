@@ -93,6 +93,8 @@ Custom markers:
 
 Ruff handles both linting and formatting. Configuration lives in
 `pyproject.toml` under `[tool.ruff]`.
+The generated `src/sdg_hub/_version.py` file is excluded via
+`extend-exclude` to avoid quote-style violations from setuptools_scm output.
 
 ```bash
 # Lint with auto-fix
