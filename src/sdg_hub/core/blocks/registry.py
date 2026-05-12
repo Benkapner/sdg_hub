@@ -133,14 +133,16 @@ class BlockRegistry:
 
     @classmethod
     def _format_error(cls, code: str, context: str, detail: str = "") -> str:
-        """Format a registry error message with consistent structure.
+        """Format a registry error message with compatibility support.
 
         Parameters
         ----------
         code : str
-            Error code (e.g., 'REG001').
+            Error code (e.g., 'REG001') or legacy action name
+            (e.g., 'register', 'get').
         context : str
-            What operation failed.
+            Error context (for coded errors) or block/category name
+            (for legacy action errors).
         detail : str, optional
             Additional context about the error. Must not contain
             sensitive data such as secrets, credentials, or environment
@@ -151,9 +153,15 @@ class BlockRegistry:
         str
             Formatted error message.
         """
-        msg = f"[{code}] {context}"
+        if code.upper().startswith("REG"):
+            msg = f"[{code}] {context}"
+            if detail:
+                msg += f": {detail}"
+            return msg
+
+        msg = f"BlockRegistry.{code}: block '{context}'"
         if detail:
-            msg += f": {detail}"
+            msg += f" {detail}"
         return msg
 
     @classmethod
