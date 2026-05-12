@@ -193,6 +193,8 @@ class MyBlock(BaseBlock):
 
 The decorator validates that the class inherits from `BaseBlock` and stores a
 `BlockMetadata` dataclass with the provided information.
+`block_name` values must be unique across the registry; registering the same
+name twice raises a `ValueError`.
 
 ### `BlockRegistry.discover_blocks()`
 
@@ -225,6 +227,9 @@ Returns registered block names. Behavior depends on arguments:
 - `list_blocks(grouped=True)` -- dict mapping category names to sorted lists of
   block names.
 - `list_blocks(include_deprecated=False)` -- excludes deprecated blocks.
+
+Passing an unknown `category` raises `KeyError` and includes the available
+categories in the error details.
 
 ### `BlockRegistry.categories()`
 

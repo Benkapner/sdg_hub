@@ -165,6 +165,8 @@ Use the `@BlockRegistry.register()` decorator. The full signature:
 The decorator validates that your class inherits from `BaseBlock` and has a
 `generate()` method. After registration, the block appears in
 `BlockRegistry.list_blocks()` and `BlockRegistry.discover_blocks()` output.
+Each `block_name` must be unique; re-registering an existing name raises a
+`ValueError`.
 
 Choose a category that matches the block's purpose:
 
