@@ -197,6 +197,8 @@ The decorator validates that the class inherits from `BaseBlock` and stores a
 Validation errors emitted during registration now include structured error
 codes for machine-parseable diagnostics. For example, non-class registration
 inputs raise a `ValueError` like `[REG001] Invalid block type: expected class, got <type>`.
+When adding extra error detail, include actionable context without exposing
+secrets, credentials, or environment variables.
 
 ### `BlockRegistry.discover_blocks()`
 
