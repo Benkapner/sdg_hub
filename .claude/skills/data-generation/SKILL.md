@@ -27,6 +27,7 @@ Proceed to Step 2.
 If the user doesn't specify a flow, invoke the `flow-browser` skill to find one.
 
 Recommend starting with `--sample 2` for a dry run.
+Use `--concurrency N` only with integers `>= 1`; invalid values are ignored and default to `5`.
 
 ```!
 "${CLAUDE_PLUGIN_ROOT}/scripts/sdg_generate.sh" $ARGUMENTS
