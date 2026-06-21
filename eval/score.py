@@ -16,6 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 import argparse
 import json
+import re
 import subprocess
 import sys
 
@@ -188,6 +189,81 @@ def check_test_coverage() -> float:
     return 1.0 if covered / max(len(block_dirs), 1) >= 0.5 else 0.0
 
 
+# Prompt injection patterns ported from harness-eval-lab security/no-prompt-injection
+_PROMPT_INJECTION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    ("ignore previous instructions", re.compile(
+        r"ignore\s+(all\s+)?previous\s+instructions", re.I,
+    )),
+    ("disregard prior", re.compile(
+        r"disregard\s+(all\s+)?(prior|previous|above)", re.I,
+    )),
+    ("system prompt override", re.compile(
+        r"system\s*prompt\s*(override|injection|change)", re.I,
+    )),
+    ("override instructions", re.compile(
+        r"override\s+(all\s+)?(instructions|rules|guidelines)", re.I,
+    )),
+    ("jailbreak attempt", re.compile(
+        r"(\bDAN\b|do\s+anything\s+now|developer\s+mode)", re.I,
+    )),
+    ("prompt leak", re.compile(
+        r"(reveal|show|print|output)\s+(your|the)\s+(system\s+)?prompt", re.I,
+    )),
+    ("role hijack", re.compile(
+        r"forget\s+(everything|all|your)\s+(you|instructions|rules)", re.I,
+    )),
+    ("bypass safety", re.compile(
+        r"(?:ignore\s+safety|bypass\s+(?:filter|safety|restriction))", re.I,
+    )),
+]
+
+_PROMPT_ALLOWLISTED_DIRS = {"red_team"}
+
+
+def check_prompt_template_safety() -> float:
+    """Scan prompt template YAMLs for injection patterns."""
+    import yaml as _yaml
+
+    flows_dir = ROOT / "src" / "sdg_hub" / "flows"
+    if not flows_dir.exists():
+        return 1.0
+
+    candidates = sorted(flows_dir.rglob("*.yaml")) + sorted(flows_dir.rglob("*.yml"))
+    findings: list[str] = []
+
+    for path in candidates:
+        rel = path.relative_to(flows_dir)
+        if rel.parts[0] in _PROMPT_ALLOWLISTED_DIRS:
+            continue
+
+        try:
+            with open(path) as fh:
+                data = _yaml.safe_load(fh)
+        except Exception:
+            continue
+
+        if not isinstance(data, list):
+            continue
+
+        for entry in data:
+            if not isinstance(entry, dict):
+                continue
+            content = entry.get("content", "")
+            if not isinstance(content, str):
+                continue
+            for label, pattern in _PROMPT_INJECTION_PATTERNS:
+                if pattern.search(content):
+                    findings.append(f"  {rel}: '{label}'")
+                    break
+
+    if findings:
+        print(
+            f"  prompt_safety check: {len(findings)} finding(s)",
+            file=sys.stderr,
+        )
+    return 1.0 if not findings else 0.0
+
+
 def check_block_tests() -> float:
     """Run block tests."""
     return (
@@ -272,9 +348,10 @@ TIERS: dict[str, dict] = {
     "project": {
         "weight": 0.50,
         "checks": {
-            "block_tests": {"fn": check_block_tests, "weight": 0.35},
-            "flow_tests": {"fn": check_flow_tests, "weight": 0.40},
+            "block_tests": {"fn": check_block_tests, "weight": 0.30},
+            "flow_tests": {"fn": check_flow_tests, "weight": 0.35},
             "connector_tests": {"fn": check_connector_tests, "weight": 0.25},
+            "prompt_safety": {"fn": check_prompt_template_safety, "weight": 0.10},
         },
     },
 }
