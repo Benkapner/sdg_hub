@@ -16,6 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 import argparse
 import json
+import re
 import subprocess
 import sys
 
@@ -188,6 +189,68 @@ def check_test_coverage() -> float:
     return 1.0 if covered / max(len(block_dirs), 1) >= 0.5 else 0.0
 
 
+# Credential patterns ported from harness-eval-lab security/no-credential-access
+_HARDCODED_SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    ("hardcoded API key assignment", re.compile(
+        r"""(?:api_key|secret_key|password|token)\s*=\s*["'][A-Za-z0-9+/=_-]{20,}["']""",
+    )),
+    ("Bearer token literal", re.compile(
+        r"""["']Bearer\s+[A-Za-z0-9+/=_-]{20,}["']""",
+    )),
+    ("sk- prefix key", re.compile(
+        r"""["']sk-[A-Za-z0-9]{20,}["']""",
+    )),
+]
+
+_SENSITIVE_PATH_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"~/\.ssh/", re.I),
+    re.compile(r"~/\.aws/credentials", re.I),
+    re.compile(r"~/\.config/gcloud", re.I),
+    re.compile(r"~/\.kube/config", re.I),
+    re.compile(r"/etc/shadow", re.I),
+    re.compile(r"~/\.netrc", re.I),
+    re.compile(r"~/\.docker/config\.json", re.I),
+]
+
+
+def check_no_hardcoded_credentials() -> float:
+    """Scan source files for hardcoded secrets and sensitive path references."""
+    scan_dirs = ["src/", "eval/", ".claude/hooks/", "scripts/"]
+    extensions = {".py", ".sh", ".yaml", ".yml", ".toml"}
+    findings: list[str] = []
+
+    for scan_dir in scan_dirs:
+        dir_path = ROOT / scan_dir
+        if not dir_path.exists():
+            continue
+        for file_path in dir_path.rglob("*"):
+            if file_path.suffix not in extensions or not file_path.is_file():
+                continue
+            try:
+                content = file_path.read_text(errors="ignore")
+            except OSError:
+                continue
+            for line_num, line in enumerate(content.split("\n"), 1):
+                for label, pattern in _HARDCODED_SECRET_PATTERNS:
+                    if pattern.search(line):
+                        findings.append(
+                            f"  {file_path.relative_to(ROOT)}:{line_num}: {label}"
+                        )
+                for pattern in _SENSITIVE_PATH_PATTERNS:
+                    if pattern.search(line):
+                        findings.append(
+                            f"  {file_path.relative_to(ROOT)}:{line_num}: "
+                            f"sensitive path reference"
+                        )
+
+    if findings:
+        print(
+            f"  credential check: {len(findings)} finding(s)",
+            file=sys.stderr,
+        )
+    return 1.0 if not findings else 0.0
+
+
 def check_block_tests() -> float:
     """Run block tests."""
     return (
@@ -256,10 +319,11 @@ TIERS: dict[str, dict] = {
     "hygiene": {
         "weight": 0.30,
         "checks": {
-            "pytest": {"fn": check_pytest, "weight": 0.35},
+            "pytest": {"fn": check_pytest, "weight": 0.30},
             "ruff": {"fn": check_ruff, "weight": 0.20},
-            "mypy": {"fn": check_mypy, "weight": 0.15},
-            "structural": {"fn": check_structural, "weight": 0.30},
+            "mypy": {"fn": check_mypy, "weight": 0.10},
+            "structural": {"fn": check_structural, "weight": 0.25},
+            "credentials": {"fn": check_no_hardcoded_credentials, "weight": 0.15},
         },
     },
     "growth": {
